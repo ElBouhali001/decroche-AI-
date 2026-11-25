@@ -1,0 +1,6 @@
+# Initial prompts passed to Whisper with --prompt-file. They bias decoding
+# toward telecom vocabulary and the number format we expect. Keep them short:
+# Whisper only reads the last ~224 tokens, and long prompts can be copied into
+# the transcript.
+fr: "Service client mobile. Carte SIM, code PUK, réseau 4G, 5G, forfait, recharge, solde, APN. Mon numéro est le 06 12 34 56 78."
+en: "Mobile customer support. SIM card, PUK code, 4G, 5G network, data plan, recharge, balance, APN. My number is 98765 43210."

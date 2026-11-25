@@ -1,0 +1,1 @@
+"""Décroche AI backend package."""

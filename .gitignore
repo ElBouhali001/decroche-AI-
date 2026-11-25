@@ -1,0 +1,14 @@
+.env
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+model_cache/
+output/
+dataset/*/audio/*
+dataset/synthetic/*/audio/*
+!dataset/french/audio/.gitkeep
+!dataset/english/audio/.gitkeep
+*.crdownload
+*.part

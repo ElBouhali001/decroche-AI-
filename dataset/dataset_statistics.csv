@@ -1,0 +1,9 @@
+metric,value
+total_recordings,10
+french_recordings,10
+english_recordings,0
+synthetic_recordings,0
+speakers,3
+train_count,7
+validation_count,2
+test_count,1

@@ -1,0 +1,6 @@
+models:
+  - tiny
+  - base
+  - small
+seed: 42
+test_metadata: dataset/test.csv

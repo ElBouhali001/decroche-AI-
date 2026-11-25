@@ -1,0 +1,9 @@
+# Extra packages for fine-tuning only (the app itself does not need them).
+# Install on the training machine: pip install -r requirements.txt -r requirements-train.txt
+torch>=2.3
+transformers>=4.44,<5
+peft>=0.12
+accelerate>=0.33
+ctranslate2>=4.4
+scipy>=1.11
+# bitsandbytes>=0.43   # only for --load-in-8bit on a CUDA GPU
