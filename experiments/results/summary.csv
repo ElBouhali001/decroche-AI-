@@ -1,0 +1,17 @@
+timestamp,model,language,clips,reference_words,wer,substitutions,deletions,insertions,phone_accuracy,phone_clips,name_accuracy,name_clips,city_accuracy,city_clips,real_time_factor,telephone,language_mode,prompt
+2026-11-25T03:53:23Z,base,fr,10,520,0.2038,67,11,28,,0,,0,,0,0.087,False,forced,False
+2026-11-25T03:53:23Z,base,all,10,520,0.2038,67,11,28,,0,,0,,0,0.087,False,forced,False
+2026-11-25T03:53:23Z,small,fr,10,520,0.1096,38,7,12,,0,,0,,0,0.175,False,forced,False
+2026-11-25T03:53:23Z,small,all,10,520,0.1096,38,7,12,,0,,0,,0,0.175,False,forced,False
+2026-11-25T03:56:30Z,large-v3-turbo,fr,10,520,0.0769,29,7,4,,0,,0,,0,0.325,False,forced,False
+2026-11-25T03:56:30Z,large-v3-turbo,all,10,520,0.0769,29,7,4,,0,,0,,0,0.325,False,forced,False
+2026-11-25T04:00:51Z,base,fr,10,520,0.2962,90,36,28,,0,,0,,0,0.077,True,forced,False,auto,default
+2026-11-25T04:00:51Z,base,all,10,520,0.2962,90,36,28,,0,,0,,0,0.077,True,forced,False,auto,default
+2026-11-25T04:00:51Z,small,fr,10,520,0.1923,51,19,30,,0,,0,,0,0.279,True,forced,False,auto,default
+2026-11-25T04:00:51Z,small,all,10,520,0.1923,51,19,30,,0,,0,,0,0.279,True,forced,False,auto,default
+2026-11-25T04:00:51Z,large-v3-turbo,fr,10,520,0.0942,28,14,7,,0,,0,,0,0.362,True,forced,False,auto,default
+2026-11-25T04:00:51Z,large-v3-turbo,all,10,520,0.0942,28,14,7,,0,,0,,0,0.362,True,forced,False,auto,default
+2026-11-25T04:04:43Z,small,fr,10,520,0.1115,39,7,12,,0,,0,,0,0.094,False,forced,False,auto,int8
+2026-11-25T04:04:43Z,small,all,10,520,0.1115,39,7,12,,0,,0,,0,0.094,False,forced,False,auto,int8
+2026-11-25T04:04:43Z,large-v3-turbo,fr,10,520,0.075,28,7,4,,0,,0,,0,0.218,False,forced,False,auto,int8
+2026-11-25T04:04:43Z,large-v3-turbo,all,10,520,0.075,28,7,4,,0,,0,,0,0.218,False,forced,False,auto,int8

@@ -42,13 +42,13 @@ SUMMARY_FIELDS = [
     "timestamp", "model", "language", "clips", "reference_words", "wer",
     "substitutions", "deletions", "insertions",
     "phone_accuracy", "phone_clips", "name_accuracy", "name_clips", "city_accuracy", "city_clips",
-    "real_time_factor", "telephone", "language_mode", "prompt",
+    "real_time_factor", "telephone", "language_mode", "prompt", "device", "compute_type",
 ]
 
 
-def faster_whisper_transcriber(model: str) -> Transcriber:
+def faster_whisper_transcriber(model: str, device: str = "auto", compute_type: str = "default") -> Transcriber:
     from backend.stt import SpeechToText
-    stt = SpeechToText(model)
+    stt = SpeechToText(model, device=device, compute_type=compute_type)
 
     def run(path: Path, language: str | None, prompt: str | None):
         result = stt.transcribe(path, language=language, initial_prompt=prompt)
@@ -196,6 +196,9 @@ def main() -> None:
                         help="forced: pass the clip's language to Whisper; auto: let Whisper detect it")
     parser.add_argument("--prompt-file", type=Path, help="YAML with fr:/en: initial prompts (domain words)")
     parser.add_argument("--telephone", action="store_true", help="pass each clip through the 8 kHz phone channel first")
+    parser.add_argument("--device", default="auto", help="cpu, cuda, or auto")
+    parser.add_argument("--compute-type", default="default",
+                        help="int8 is usually fastest on a Mac CPU; default keeps the model's own type")
     parser.add_argument("--output-dir", type=Path, default=Path("experiments/results"))
     args = parser.parse_args()
 
@@ -207,19 +210,20 @@ def main() -> None:
     prompts = _load_prompts(args.prompt_file)
     languages = sorted({r.get("language", "fr") for r in rows})
     stamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    suffix = "_tel" if args.telephone else ""
+    suffix = ("_tel" if args.telephone else "") + ("" if args.compute_type == "default" else f"_{args.compute_type}")
 
     for model in args.models:
         print(f"== {model} on {len(rows)} clips ({', '.join(languages)})")
         started = time.perf_counter()
-        results = score_rows(rows, root, faster_whisper_transcriber(model), args.language_mode, prompts, args.telephone)
+        results = score_rows(rows, root, faster_whisper_transcriber(model, args.device, args.compute_type), args.language_mode, prompts, args.telephone)
         name = _safe_name(model) + suffix
         _write(args.output_dir / f"hypotheses_{name}.csv", results)
         _write(args.output_dir / f"confusions_{name}.csv", confusions(results))
         summary = summarize(results, languages)
         for row in summary:
             row.update({"timestamp": stamp, "model": model, "telephone": args.telephone,
-                        "language_mode": args.language_mode, "prompt": bool(prompts)})
+                        "language_mode": args.language_mode, "prompt": bool(prompts),
+                        "device": args.device, "compute_type": args.compute_type})
             print(f"   {row['language']:>3}  WER {row['wer']}  phone {row['phone_accuracy'] or '-'}  "
                   f"RTF {row['real_time_factor']}")
         _write(args.output_dir / "summary.csv", summary, SUMMARY_FIELDS, append=True)

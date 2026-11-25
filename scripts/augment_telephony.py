@@ -30,10 +30,18 @@ PHONE_RATE = 8000
 
 
 def load_audio(path: str | Path, sample_rate: int = TARGET_RATE) -> np.ndarray:
-    """Decode any audio file to mono float32 with ffmpeg."""
+    """Decode any audio file to mono float32.
+
+    Uses the ffmpeg command when it is installed, otherwise PyAV through
+    faster-whisper's decoder (installed with requirements.txt).
+    """
     ffmpeg = shutil.which("ffmpeg")
     if not ffmpeg:
-        raise RuntimeError("ffmpeg is required to decode audio.")
+        try:
+            from faster_whisper.audio import decode_audio
+        except ImportError as exc:
+            raise RuntimeError("Install ffmpeg (brew install ffmpeg) or faster-whisper to decode audio.") from exc
+        return np.asarray(decode_audio(str(path), sampling_rate=sample_rate), dtype=np.float32)
     result = subprocess.run(
         [ffmpeg, "-nostdin", "-v", "error", "-i", str(path), "-ac", "1", "-ar", str(sample_rate), "-f", "f32le", "-"],
         check=True, capture_output=True,
