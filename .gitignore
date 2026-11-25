@@ -12,3 +12,4 @@ dataset/synthetic/*/audio/*
 !dataset/english/audio/.gitkeep
 *.crdownload
 *.part
+*.docx

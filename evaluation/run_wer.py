@@ -91,7 +91,11 @@ def score_rows(
     with tempfile.TemporaryDirectory() as tmp:
         for row in rows:
             language = row.get("language", "fr")
-            path = root / row["audio_file"]
+            path = Path(row["audio_file"])
+            if not path.is_absolute() and not (root / path).exists() and path.exists():
+                pass  # path is relative to the current folder (synthetic metadata)
+            elif not path.is_absolute():
+                path = root / path
             if telephone:
                 from scripts.augment_telephony import augment_file
                 phone_path = Path(tmp) / f"{row['audio_id']}.wav"

@@ -140,7 +140,11 @@ with left:
                     "Transcription du message..." if language_code == "fr" else "Transcribing recording...",
                     expanded=False,
                 ):
-                    transcription = SpeechToText(settings.whisper_model).transcribe(
+                    transcription = SpeechToText(
+                        settings.whisper_model,
+                        device=settings.whisper_device,
+                        compute_type=settings.whisper_compute_type,
+                    ).transcribe(
                         audio_path, language=language_code
                     )
                 st.session_state.last_audio = transcription.text
