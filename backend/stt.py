@@ -36,6 +36,7 @@ class SpeechToText:
         language: str | None = None,
         initial_prompt: str | None = None,
         vad_filter: bool = True,
+        vad_threshold: float | None = None,
     ) -> Transcription:
         path = Path(audio_path)
         if not path.is_file():
@@ -91,6 +92,7 @@ class SpeechToText:
                     condition_on_previous_text=False,
                     initial_prompt=initial_prompt,
                     vad_filter=vad_filter,
+                    vad_parameters={"threshold": vad_threshold} if vad_threshold is not None else None,
                     beam_size=5,
                 )
             finally:

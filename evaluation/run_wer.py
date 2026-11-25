@@ -47,12 +47,13 @@ SUMMARY_FIELDS = [
 
 
 def faster_whisper_transcriber(model: str, device: str = "auto", compute_type: str = "default",
-                               vad: bool = True) -> Transcriber:
+                               vad: bool = True, vad_threshold: float | None = None) -> Transcriber:
     from backend.stt import SpeechToText
     stt = SpeechToText(model, device=device, compute_type=compute_type)
 
     def run(path: Path, language: str | None, prompt: str | None):
-        result = stt.transcribe(path, language=language, initial_prompt=prompt, vad_filter=vad)
+        result = stt.transcribe(path, language=language, initial_prompt=prompt, vad_filter=vad,
+                                   vad_threshold=vad_threshold)
         return result.text, result.processing_seconds, result.duration_seconds
 
     return run
@@ -204,6 +205,8 @@ def main() -> None:
     parser.add_argument("--prompt-file", type=Path, help="YAML with fr:/en: initial prompts (domain words)")
     parser.add_argument("--telephone", action="store_true", help="pass each clip through the 8 kHz phone channel first")
     parser.add_argument("--device", default="auto", help="cpu, cuda, or auto")
+    parser.add_argument("--vad-threshold", type=float,
+                        help="speech probability needed to keep audio (faster-whisper default 0.5); lower keeps more")
     parser.add_argument("--no-vad", action="store_true",
                         help="turn off faster-whisper's voice activity filter (checks whether it cuts speech)")
     parser.add_argument("--compute-type", default="default",
@@ -219,12 +222,12 @@ def main() -> None:
     prompts = _load_prompts(args.prompt_file)
     languages = sorted({r.get("language", "fr") for r in rows})
     stamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    suffix = ("_tel" if args.telephone else "") + ("_novad" if args.no_vad else "") + ("" if args.compute_type == "default" else f"_{args.compute_type}")
+    suffix = ("_tel" if args.telephone else "") + ("_novad" if args.no_vad else "") + (f"_vad{args.vad_threshold}" if args.vad_threshold is not None else "") + ("" if args.compute_type == "default" else f"_{args.compute_type}")
 
     for model in args.models:
         print(f"== {model} on {len(rows)} clips ({', '.join(languages)})")
         started = time.perf_counter()
-        results = score_rows(rows, root, faster_whisper_transcriber(model, args.device, args.compute_type, not args.no_vad), args.language_mode, prompts, args.telephone)
+        results = score_rows(rows, root, faster_whisper_transcriber(model, args.device, args.compute_type, not args.no_vad, args.vad_threshold), args.language_mode, prompts, args.telephone)
         prefix = "" if args.metadata.stem in ("test", "metadata") and args.metadata.parent.name == "dataset" else f"{args.metadata.parent.name}_"
         name = prefix + _safe_name(model) + suffix
         _write(args.output_dir / f"hypotheses_{name}.csv", results)
