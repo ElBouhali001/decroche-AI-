@@ -31,7 +31,7 @@ from typing import Callable
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from backend.text_numbers import extract_mobile_number  # noqa: E402
+from backend.text_numbers import extract_mobile_number, strip_accents  # noqa: E402
 from evaluation.text_normalizer import align, normalize  # noqa: E402
 
 # A transcriber takes (audio_path, language or None, prompt or None) and returns
@@ -46,12 +46,13 @@ SUMMARY_FIELDS = [
 ]
 
 
-def faster_whisper_transcriber(model: str, device: str = "auto", compute_type: str = "default") -> Transcriber:
+def faster_whisper_transcriber(model: str, device: str = "auto", compute_type: str = "default",
+                               vad: bool = True) -> Transcriber:
     from backend.stt import SpeechToText
     stt = SpeechToText(model, device=device, compute_type=compute_type)
 
     def run(path: Path, language: str | None, prompt: str | None):
-        result = stt.transcribe(path, language=language, initial_prompt=prompt)
+        result = stt.transcribe(path, language=language, initial_prompt=prompt, vad_filter=vad)
         return result.text, result.processing_seconds, result.duration_seconds
 
     return run
@@ -74,7 +75,9 @@ def _entity_hits(row: dict[str, str], hypothesis: str, language: str) -> dict[st
     for field in ("name", "city"):
         value = (row.get(f"entity_{field}") or "").strip()
         if value:
-            hits[f"{field}_ok"] = str(normalize(value, language) in normalize(hypothesis, language))
+            # Accents are ignored here: "Ines" for "Inès" still finds the right customer.
+            wanted = strip_accents(normalize(value, language))
+            hits[f"{field}_ok"] = str(wanted in strip_accents(normalize(hypothesis, language)))
     return hits
 
 
@@ -201,6 +204,8 @@ def main() -> None:
     parser.add_argument("--prompt-file", type=Path, help="YAML with fr:/en: initial prompts (domain words)")
     parser.add_argument("--telephone", action="store_true", help="pass each clip through the 8 kHz phone channel first")
     parser.add_argument("--device", default="auto", help="cpu, cuda, or auto")
+    parser.add_argument("--no-vad", action="store_true",
+                        help="turn off faster-whisper's voice activity filter (checks whether it cuts speech)")
     parser.add_argument("--compute-type", default="default",
                         help="int8 is usually fastest on a Mac CPU; default keeps the model's own type")
     parser.add_argument("--output-dir", type=Path, default=Path("experiments/results"))
@@ -214,13 +219,14 @@ def main() -> None:
     prompts = _load_prompts(args.prompt_file)
     languages = sorted({r.get("language", "fr") for r in rows})
     stamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-    suffix = ("_tel" if args.telephone else "") + ("" if args.compute_type == "default" else f"_{args.compute_type}")
+    suffix = ("_tel" if args.telephone else "") + ("_novad" if args.no_vad else "") + ("" if args.compute_type == "default" else f"_{args.compute_type}")
 
     for model in args.models:
         print(f"== {model} on {len(rows)} clips ({', '.join(languages)})")
         started = time.perf_counter()
-        results = score_rows(rows, root, faster_whisper_transcriber(model, args.device, args.compute_type), args.language_mode, prompts, args.telephone)
-        name = _safe_name(model) + suffix
+        results = score_rows(rows, root, faster_whisper_transcriber(model, args.device, args.compute_type, not args.no_vad), args.language_mode, prompts, args.telephone)
+        prefix = "" if args.metadata.stem in ("test", "metadata") and args.metadata.parent.name == "dataset" else f"{args.metadata.parent.name}_"
+        name = prefix + _safe_name(model) + suffix
         _write(args.output_dir / f"hypotheses_{name}.csv", results)
         _write(args.output_dir / f"confusions_{name}.csv", confusions(results))
         summary = summarize(results, languages)
@@ -228,7 +234,7 @@ def main() -> None:
             row.update({"timestamp": stamp, "model": model, "telephone": args.telephone,
                         "language_mode": args.language_mode, "prompt": bool(prompts),
                         "device": args.device, "compute_type": args.compute_type})
-            print(f"   {row['language']:>3}  WER {row['wer']}  phone {row['phone_accuracy'] or '-'}  "
+            print(f"   {row['language']:>3}  WER {row['wer']}  phone {'-' if row['phone_accuracy'] == '' else row['phone_accuracy']}  "
                   f"RTF {row['real_time_factor']}")
         _write(args.output_dir / "summary.csv", summary, SUMMARY_FIELDS, append=True)
         print(f"   done in {time.perf_counter() - started:.1f}s")

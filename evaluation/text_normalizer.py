@@ -27,7 +27,7 @@ def normalize(text: str, language: str = "fr", numbers_to_digits: bool = True) -
     if numbers_to_digits:
         text = words_to_digits(text, language)
         # "06 12 34" and "061234" should count the same
-        text = re.sub(r"(?<=\d)[\s.\-](?=\d)", "", text)
+        text = re.sub(r"(?<=\d)[\s.,\-]+(?=\d)", "", text)
     # Punctuation and apostrophes become spaces: "c'est" and "c est" score the same.
     text = re.sub(r"[^\w\s]", " ", text)
     fillers = FILLERS.get(language[:2], set())

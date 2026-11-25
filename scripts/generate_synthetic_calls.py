@@ -133,6 +133,15 @@ def make_utterances(language: str, count: int, rng: random.Random) -> list[dict[
     return rows
 
 
+# macOS novelty voices sing, whisper or play sound effects. They are useless as
+# speech data and make the English results look worse than they are.
+NOVELTY_VOICES = {
+    "Albert", "Bad News", "Bahh", "Bells", "Boing", "Bubbles", "Cellos", "Deranged", "Good News",
+    "Hysterical", "Jester", "Junior", "Organ", "Pipe Organ", "Ralph", "Superstar", "Trinoids",
+    "Whisper", "Wobble", "Zarvox", "Fred", "Kathy",
+}
+
+
 def say_voices(language: str) -> list[str]:
     if platform.system() != "Darwin" or not shutil.which("say"):
         return []
@@ -141,7 +150,7 @@ def say_voices(language: str) -> list[str]:
     voices = []
     for line in listing.splitlines():
         match = re.match(r"^(.+?)\s{2,}(\w\w_\w\w)", line)
-        if match and match.group(2).startswith(prefix):
+        if match and match.group(2).startswith(prefix) and match.group(1).strip() not in NOVELTY_VOICES:
             voices.append(match.group(1).strip())
     return voices
 
@@ -151,7 +160,11 @@ def voice_with_say(text: str, voice: str, target: Path) -> None:
     with tempfile.TemporaryDirectory() as tmp:
         aiff = Path(tmp) / "x.aiff"
         subprocess.run(["say", "-v", voice, "-o", str(aiff), text], check=True)
-        subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(aiff), "-ar", "16000", "-ac", "1", str(target)], check=True)
+        # afconvert ships with macOS, so no ffmpeg is needed here.
+        if shutil.which("afconvert"):
+            subprocess.run(["afconvert", "-f", "WAVE", "-d", "LEI16@16000", "-c", "1", str(aiff), str(target)], check=True)
+        else:
+            subprocess.run(["ffmpeg", "-v", "error", "-y", "-i", str(aiff), "-ar", "16000", "-ac", "1", str(target)], check=True)
 
 
 def main() -> None:

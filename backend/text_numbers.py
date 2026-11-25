@@ -115,7 +115,12 @@ def words_to_digits(text: str, language: str = "fr") -> str:
 
 
 def _collapse_digit_runs(text: str) -> list[str]:
-    """Join digit groups separated by spaces, dots or dashes into single strings."""
+    """Join digit groups separated by spaces, dots, dashes or commas into single strings.
+
+    Whisper often writes dictated numbers as "07, 70, 45, 58, 53" or, in
+    English, as "79,042,48,611" (thousands separators), so commas count too.
+    """
+    text = re.sub(r"(?<=\d),\s*(?=\d)", " ", text)
     runs = re.findall(r"\+?\d[\d\s.\-]*\d|\+?\d", text)
     return [re.sub(r"[\s.\-]", "", run) for run in runs]
 

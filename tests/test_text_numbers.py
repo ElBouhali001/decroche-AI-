@@ -36,3 +36,8 @@ def test_agent_accepts_french_number():
     answer = agent.reply("Mon numéro est le 06 12 34 56 78")
     assert agent.state.mobile_number == "0612345678"
     assert "nom" in answer.lower()
+
+
+def test_comma_separated_groups_from_whisper():
+    assert extract_mobile_number("C'est le 07, 70, 45, 58, 53.", "fr") == "0770455853"
+    assert extract_mobile_number("It's 79,042,48,611", "en") == "7904248611"

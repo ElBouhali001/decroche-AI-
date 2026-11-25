@@ -13,3 +13,4 @@ dataset/synthetic/*/audio/*
 *.crdownload
 *.part
 *.docx
+.vscode/

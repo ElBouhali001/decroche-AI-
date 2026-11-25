@@ -35,6 +35,7 @@ class SpeechToText:
         audio_path: str | Path,
         language: str | None = None,
         initial_prompt: str | None = None,
+        vad_filter: bool = True,
     ) -> Transcription:
         path = Path(audio_path)
         if not path.is_file():
@@ -89,7 +90,7 @@ class SpeechToText:
                     language=language,
                     condition_on_previous_text=False,
                     initial_prompt=initial_prompt,
-                    vad_filter=True,
+                    vad_filter=vad_filter,
                     beam_size=5,
                 )
             finally:
